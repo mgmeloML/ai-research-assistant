@@ -1,40 +1,37 @@
-import os
+import os, hashlib, json
 from dotenv import load_dotenv
 from data_ingesters.download_papers import download_arxiv_papers
 from data_ingesters.scrape import scrape_data
 from ddgs import DDGS
-import hashlib, json
 
 load_dotenv()
 
-directory = os.getenv("SCRAPE_DIR")
+scraped_dir = os.getenv("SCRAPE_DIR")
+pdf_dir = os.getenv("PDF_DIR")
 
-def make_filename(identifier):
-    return str(hashlib.md5(identifier.encode()).hexdigest())
+def make_filename(identifier, length=12):
+    return hashlib.md5(identifier.encode()).hexdigest()[:length]
 
-metadata = {"title":None,"url":None}
+def collect_web_data(query, directory, max_results, metadata={}):
+    results = DDGS().text(query, max_results=max_results)
+    for result in results:
+        title = result["title"]
+        url = result["href"]
+        filename = make_filename(url)
 
-def collect_data(query:str, search_mode:str, max_results:int):
-    if search_mode == "web":
-        results = DDGS().text(query, max_results=max_results)
-        for result in results:
-            title = result["title"]
-            url = result["href"]
-            filename = make_filename(url)
+        text_name = filename+".txt"
+        scrape_data(url=url,directory=directory ,filename=text_name)
+        
+        meta_name = filename+".json"
+        metadata["title"] = title
+        metadata["url"] = url
+        
+        f = open(str(directory)+meta_name,"w", encoding="utf-8")
+        json.dump(metadata, f, ensure_ascii=False, indent=2)
+        f.close()
 
-            text_name = filename+".txt"
-            scrape_data(url=url, filename=text_name)
-            
-            meta_name = filename+".json"
-            metadata["title"] = title
-            metadata["url"] = url
-            
-            f = open(str(directory)+meta_name,"w", encoding="utf-8")
-            json.dump(metadata, f, ensure_ascii=False, indent=2)
-            f.close()
-            
-    elif search_mode == "research":
-        download_arxiv_papers(query, max_results=max_results)
+def collect_pdf_data(query, directory, max_results):
+    download_arxiv_papers(query,directory=directory, max_results=max_results)
 
 if __name__ == "__main__":
-    collect_data("what is web scraping", search_mode="web",max_results=5)
+    collect_web_data("what is web scraping", directory=scraped_dir, max_results=5)

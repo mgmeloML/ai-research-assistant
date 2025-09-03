@@ -1,16 +1,6 @@
-import os, json
-from dotenv import load_dotenv
-import arxiv
+import arxiv, json
 
-load_dotenv()
-
-directory = os.getenv("PDF_DIR")
-metadata = {
-    "title" :None,
-    "url":None
-}
-
-def download_arxiv_papers(query, max_results):
+def download_arxiv_papers(query, directory, max_results, metadata={}):
 
     client = arxiv.Client()
 
@@ -32,7 +22,4 @@ def download_arxiv_papers(query, max_results):
 
         with open(str(directory)+"/"+str(filename), "w") as f:
             json.dump(metadata, f)
-
-if __name__ == "__main__":
-    download_arxiv_papers("machine learning", 5)
     
