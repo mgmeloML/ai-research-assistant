@@ -1,11 +1,5 @@
 from langchain_community.document_loaders import PyPDFDirectoryLoader, DirectoryLoader, TextLoader
-import os,re, json, html
-from dotenv import load_dotenv
-
-load_dotenv()
-
-directory = os.getenv("PDF_DIR")
-folder = os.getenv("SCRAPE_DIR")
+import re, json
 
 def clean_pdf_text(text):
     text = re.sub(r'-\s*\n\s*', '', text) 
@@ -53,6 +47,7 @@ def load_pdf_docs(directory):
 
     return docs
 
+
 def load_scraped_docs(directory):
     text_loader_kwargs = {"autodetect_encoding": True}
     loader = DirectoryLoader(directory, glob="**/*.txt", loader_cls=TextLoader, silent_errors=True, loader_kwargs = text_loader_kwargs)
@@ -65,4 +60,4 @@ def load_scraped_docs(directory):
     return docs
 
 if __name__ == "__main__":
-    print(load_pdf_docs(directory)[2])
+    pass
