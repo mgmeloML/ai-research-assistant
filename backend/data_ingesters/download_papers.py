@@ -22,4 +22,6 @@ def download_arxiv_papers(query, directory, max_results, metadata={}):
 
         with open(str(directory)+"/"+str(filename), "w") as f:
             json.dump(metadata, f)
-    
+
+if __name__ == "__main__":
+    pass

@@ -14,3 +14,6 @@ def scrape_data(url, directory, filename):
         f = open(str(directory)+filename, "a", encoding="utf-8")
         f.write(text)
         f.close()
+
+if __name__ == "__main__":
+    pass
