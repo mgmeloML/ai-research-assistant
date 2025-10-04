@@ -2,22 +2,28 @@ from langchain.prompts import ChatPromptTemplate
 from langchain_ollama import OllamaLLM
 
 
-model = OllamaLLM(model="gemma3:4b")
+model = OllamaLLM(model="granite3.3:8b")
 
 PROMPT_TEMPLATE = """
-You are a research assistant. Answer the user's question using only the provided context. 
-If the context does not contain enough information, say so honestly.
+You are a research assistant. Use the conversation history and the provided context
+to answer the user's question. If the context does not contain enough information,
+say so honestly rather than making something up.
+
+Conversation history:
+{history}
 
 Context:
 {context}
 
 ---
 
-Question: {question}
+User's current question:
+{question}
 
 Instructions:
-- Write a detailed, well-structured answer (at least 3-5 paragraphs).  
+- Write a detailed, well-structured answer (at least 3–5 paragraphs).
 - Use bullet points or paragraphs if needed for clarity.
+- Make sure the answer is grounded in the given context and consistent with the conversation history.
 """
 
 COLLECTION_NAME_TEMPLATE = """
@@ -33,7 +39,7 @@ Guidelines:
 - Avoid stopwords like "the", "a", "of", etc.
 - If multiple queries are similar, generate deterministic names (same query → same name).
 
-Return only the final collection name.
+Return only the final collection name and nothing more.
 """
 
 NUM_SOURCES_TEMPLATE = """
@@ -52,26 +58,59 @@ Return only a single integer and nothing more
 """
 
 CHAT_NAME_TEMPLATE = """
-You are an assistant that generates a short, descriptive, and memorable name for a chat based on the user’s question.
+You are an assistant that generates a short, descriptive, and memorable name for a chat based on the user's question.
 
-User Question: "{user_question}"
+User Question: "{question}"
 
 Guidelines:
 - Summarize the essence of the question in 3-6 words.
-- Use lowercase letters, numbers, and underscores only.
+- Use lowercase letters, numbers and "-" only.
 - No spaces, punctuation, or special characters.
 - Avoid generic words like "chat", "discussion", "topic".
 - Make it catchy and meaningful so someone can identify the chat at a glance.
 
-Return only the final chat name.
+Return only the final chat name and nothing more.
 """
 
-def generate_response(docs, query):
-    prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+def generate_chat_name(query):
+    prompt_template = ChatPromptTemplate.from_template(CHAT_NAME_TEMPLATE)
+    prompt = prompt_template.format(question=query)
+    response = model.invoke(prompt)
+    print(response)
+
+def num_sources(query):
+    prompt_template = ChatPromptTemplate.from_template(NUM_SOURCES_TEMPLATE)
+    prompt = prompt_template.format(question=query)
+    response = model.invoke(prompt)
+    print(response)
+
+def generate_collection_name(query):
+    prompt_template = ChatPromptTemplate.from_template(COLLECTION_NAME_TEMPLATE)
+    prompt = prompt_template.format(question=query)
+    response = model.invoke(prompt)
+    print(response)
+
+def generate_response(docs, query, history = None):
+    
+    history_text = ""
+    if history:
+        for turn in history:
+            history_text += f"{turn['role'].capitalize()}: {turn['content']}\n"
+    else:
+        history_text = "No prior conversation.\n"
+
     context_text = "\n\n---\n\n".join([doc.page_content for doc in docs]) 
-    prompt = prompt_template.format(context=context_text, question=query)
+
+    prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+    prompt = prompt_template.format(context=context_text, question=query, history=history_text)
 
     response_text = model.invoke(prompt)
     sources = list(set([doc.metadata["source"] for doc in docs]))
     formatted_response = f"Response: {response_text}\nSources: {sources}"
     print(formatted_response)
+
+if __name__ == "__main__":
+    question = "explain how A* search works and why the heuristic must be admissible"
+    generate_chat_name(question)
+    generate_collection_name(question)
+    num_sources(question)
