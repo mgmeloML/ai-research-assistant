@@ -21,12 +21,11 @@ def clean_scraped_text(text):
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
-def resolve_metadata(doc , directory):
+def resolve_metadata(doc):
     meta = doc.metadata["source"]
-    meta = meta.split("\\")[-1]
     meta = meta[:-4]
 
-    with open(directory+"/"+meta+".json", "r") as f:
+    with open(meta+".json", "r") as f:
         metadata = json.load(f)
 
     title = metadata["title"]
@@ -43,7 +42,7 @@ def load_pdf_docs(directory):
 
     for doc in docs:
         doc.page_content = clean_pdf_text(doc.page_content)
-        doc = resolve_metadata(doc=doc, directory=directory)
+        doc = resolve_metadata(doc=doc)
 
     return docs
 
@@ -55,7 +54,7 @@ def load_scraped_docs(directory):
 
     for doc in docs:
         doc.page_content = clean_scraped_text(doc.page_content)
-        doc = resolve_metadata(doc=doc, directory=directory)
+        doc = resolve_metadata(doc=doc)
 
     return docs
 
