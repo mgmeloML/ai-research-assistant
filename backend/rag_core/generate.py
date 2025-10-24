@@ -1,5 +1,6 @@
 from langchain.prompts import ChatPromptTemplate
 from langchain_ollama import OllamaLLM
+import re
 
 
 model = OllamaLLM(model="granite3.3:8b")
@@ -21,7 +22,7 @@ User's current question:
 {question}
 
 Instructions:
-- Write a detailed, well-structured answer (at least 3–5 paragraphs).
+- Write a detailed, well-structured answer (at least 3-5 paragraphs).
 - Use bullet points or paragraphs if needed for clarity.
 - Make sure the answer is grounded in the given context and consistent with the conversation history.
 """
@@ -64,7 +65,7 @@ User Question: "{question}"
 
 Guidelines:
 - Summarize the essence of the question in 3-6 words.
-- Use lowercase letters, numbers and "-" only.
+- Use lowercase letters, numbers and "-" only no quotation marks.
 - No spaces, punctuation, or special characters.
 - Avoid generic words like "chat", "discussion", "topic".
 - Make it catchy and meaningful so someone can identify the chat at a glance.
@@ -76,19 +77,24 @@ def generate_chat_name(query):
     prompt_template = ChatPromptTemplate.from_template(CHAT_NAME_TEMPLATE)
     prompt = prompt_template.format(question=query)
     response = model.invoke(prompt)
-    print(response)
+    return response
 
 def num_sources(query):
     prompt_template = ChatPromptTemplate.from_template(NUM_SOURCES_TEMPLATE)
     prompt = prompt_template.format(question=query)
     response = model.invoke(prompt)
-    print(response)
+    response = re.sub(r'["“”\'`]', '', response.strip())
+    return response
 
 def generate_collection_name(query):
     prompt_template = ChatPromptTemplate.from_template(COLLECTION_NAME_TEMPLATE)
     prompt = prompt_template.format(question=query)
     response = model.invoke(prompt)
-    print(response)
+    response = response.strip().lower()
+    response = re.sub(r'[^a-z0-9_]', '_', response)
+    response = re.sub(r'_+', '_', response)
+    response = response.strip('_')
+    return response
 
 def generate_response(docs, query, history = None):
     
@@ -107,10 +113,10 @@ def generate_response(docs, query, history = None):
     response_text = model.invoke(prompt)
     sources = list(set([doc.metadata["source"] for doc in docs]))
     formatted_response = f"Response: {response_text}\nSources: {sources}"
-    print(formatted_response)
+    return formatted_response
 
 if __name__ == "__main__":
-    question = "explain how A* search works and why the heuristic must be admissible"
-    generate_chat_name(question)
+    question = "what is mathematics"
+    print(generate_chat_name(question))
     generate_collection_name(question)
     num_sources(question)
