@@ -12,6 +12,15 @@ def get_collection(collection_name: str):
         collection_name=collection_name
     )
 
+def delete_collection(collection_name: str):
+    store = Chroma(
+        persist_directory="data/vector_store",
+        collection_name=collection_name
+    )
+    client = store._client
+    client.delete_collection(collection_name)
+
+    
 def make_database(chunks, collection_name):
     db = Chroma.from_documents(
         persist_directory="data/vector_store",
@@ -26,6 +35,3 @@ def retrieve_docs(query: str, collection_name: str, k: int = 5):
     db = get_collection(collection_name)
     results = db.similarity_search_by_vector(query, k=k) 
     return results
-        
-if __name__ == "__main__":
-    pass
