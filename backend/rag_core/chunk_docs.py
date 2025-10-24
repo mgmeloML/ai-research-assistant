@@ -10,6 +10,3 @@ def split_text(documents):
     chunks = text_splitter.split_documents(documents)
     
     return chunks
-
-if __name__ == "__main__":
-    pass
