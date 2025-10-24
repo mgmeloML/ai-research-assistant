@@ -1,0 +1,12 @@
+
+
+services:
+  backend_service:
+    build: ./backend
+    ports:
+      - "8000:8000"
+
+  ui_service:
+    build: ./frontend
+    ports:
+      - "8501:8501"
